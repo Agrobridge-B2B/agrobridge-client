@@ -26,7 +26,7 @@ export default function HeroSection() {
   ];
 
   return (
-    <section className="relative h-[calc(100vh-5rem)] bg-black overflow-hidden">
+    <section className="relative h-screen sm:h-[calc(100vh-5rem)] bg-black font-montserrat">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0">
         <Image
@@ -48,14 +48,14 @@ export default function HeroSection() {
               CONNECTING SUSTAINABLE AGRICULTURE TO GLOBAL OPPORTUNITIES
             </h1>
 
-            <p className="text-base sm:text-lg text-[#F1F1F1]/90 max-w-2xl">
+            <p className="text-base sm:text-lg text-brand-light/90 max-w-2xl">
               The premier B2B marketplace for producers, exporters, and wholesalers to trade fruits, vegetables, grains, and livestock globally.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3">
               <Link
                 href="/marketplace"
-                className="inline-flex items-center justify-center bg-[#78C841] text-white px-6 py-3 rounded-md font-semibold text-base hover:bg-[#6AB535] transition-colors"
+                className="inline-flex items-center justify-center bg-brand-green text-white px-6 py-3 rounded-md font-semibold text-base hover:bg-brand-green-dark transition-colors"
               >
                 Explore Marketplace ↗
               </Link>
@@ -86,7 +86,7 @@ export default function HeroSection() {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="bg-[#1f1f1f]/80 backdrop-blur-sm border border-[#78C841]/20 rounded-lg p-3 lg:p-4 flex flex-col items-center text-center hover:bg-[#1f1f1f]/90 transition-colors"
+              className="bg-brand-dark/80 backdrop-blur-sm border border-brand-green/20 rounded-lg p-3 lg:p-4 flex flex-col items-center text-center hover:bg-brand-dark/90 transition-colors"
             >
               <div className="relative w-10 h-10 lg:w-12 lg:h-12 mb-2">
                 <Image
@@ -100,7 +100,7 @@ export default function HeroSection() {
                 {feature.title}
               </h3>
               {feature.subtitle && (
-                <p className="text-[#F1F1F1]/70 text-[10px] lg:text-xs font-medium">
+                <p className="text-brand-light/70 text-[10px] lg:text-xs font-medium">
                   {feature.subtitle}
                 </p>
               )}

@@ -17,7 +17,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-50">
+    <nav className="bg-white shadow-sm sticky top-0 z-50 font-montserrat">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
@@ -37,7 +37,7 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 href={link.href}
-                className="text-[#1f1f1f] hover:text-[#78C841] font-medium text-sm transition-colors"
+                className="text-brand-dark hover:text-brand-green font-medium text-sm transition-colors"
               >
                 {link.name}
               </Link>
@@ -48,13 +48,13 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-4">
             <Link
               href="/login"
-              className="text-[#1f1f1f] hover:text-[#78C841] font-medium text-sm transition-colors"
+              className="text-brand-dark hover:text-brand-green font-medium text-sm transition-colors"
             >
               Sign in
             </Link>
             <Link
               href="/register"
-              className="bg-[#78C841] text-white px-6 py-2.5 rounded-md font-medium text-sm hover:bg-[#6AB535] transition-colors"
+              className="bg-brand-green text-white px-6 py-2.5 rounded-md font-medium text-sm hover:bg-brand-green-dark transition-colors"
             >
               Get Started
             </Link>
@@ -63,7 +63,7 @@ export default function Navbar() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 rounded-md text-[#1f1f1f] hover:bg-gray-100"
+            className="md:hidden p-2 rounded-md text-brand-dark hover:bg-gray-100"
           >
             <svg
               className="h-6 w-6"
@@ -96,7 +96,7 @@ export default function Navbar() {
             <Link
               key={link.name}
               href={link.href}
-              className="text-[#1f1f1f] hover:text-[#78C841] font-medium text-lg transition-colors"
+              className="text-brand-dark hover:text-brand-green font-medium text-lg transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
               {link.name}
@@ -105,14 +105,14 @@ export default function Navbar() {
           <div className="pt-6 flex flex-col items-center space-y-4 w-full max-w-xs">
             <Link
               href="/login"
-              className="text-[#1f1f1f] hover:text-[#78C841] font-medium text-lg transition-colors"
+              className="text-brand-dark hover:text-brand-green font-medium text-lg transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
               Sign in
             </Link>
             <Link
               href="/register"
-              className="bg-[#78C841] text-white px-8 py-3 rounded-md font-medium text-lg hover:bg-[#6AB535] transition-colors text-center w-full"
+              className="bg-brand-green text-white px-8 py-3 rounded-md font-medium text-lg hover:bg-brand-green-dark transition-colors text-center w-full"
               onClick={() => setIsMenuOpen(false)}
             >
               Get Started
