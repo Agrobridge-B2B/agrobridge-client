@@ -36,7 +36,7 @@ export default function HeroSection() {
           className="object-cover opacity-70"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#000000]/70 to-[#000000]/90" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#000000]/50 to-[#000000]/80" />
       </div>
 
       {/* Content */}

@@ -1,6 +1,7 @@
 import Navbar from '@/components/Navbar';
-import HeroSection from '@/components/HeroSection';
-import GlobalMarketplace from '@/components/GlobalMarketplace';
+import HeroSection from '@/components/home/HeroSection';
+import GlobalMarketplace from '@/components/home/GlobalMarketplace';
+import PlatformFeatures from '@/components/home/PlatformFeatures';
 
 export default function Home() {
   return (
@@ -8,6 +9,7 @@ export default function Home() {
       <Navbar />
       <HeroSection />
       <GlobalMarketplace />
+      <PlatformFeatures />
     </div>
   );
 }

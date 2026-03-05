@@ -31,19 +31,19 @@ export default function GlobalMarketplace() {
   ];
 
   return (
-    <section className="min-h-screen bg-[#F1F1F1] py-16 lg:py-20 font-montserrat flex items-center">
+    <section className="min-h-screen bg-brand-light py-16 lg:py-20 font-montserrat flex items-center">
       <div className="max-w-7xl mx-auto px-4 w-full">
         {/* Section Header */}
         <div className="text-center mb-12 lg:mb-16">
           <div className="inline-block mb-4">
-            <span className="text-[#78C841] text-sm font-medium px-4 py-2 rounded-full bg-[#78C841]/10">
+            <span className="text-brand-green text-sm font-medium px-4 py-2 rounded-full bg-brand-green/10">
               Global Marketplace
             </span>
           </div>
-          <h2 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-[#1A1A1A] mb-4">
-            Premium Agricultural <span className="text-[#78C841]">Categories</span>
+          <h2 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-brand-dark mb-4">
+            Premium Agricultural <span className="text-brand-green">Categories</span>
           </h2>
-          <p className="text-base lg:text-lg text-[#6B7280] max-w-2xl mx-auto">
+          <p className="text-base lg:text-lg text-brand-gray max-w-2xl mx-auto">
             Browse products from verified suppliers worldwide
           </p>
         </div>
