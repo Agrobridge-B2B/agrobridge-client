@@ -13,13 +13,13 @@ export default function TeamSection() {
 			name: "Mohamed Amine Kharmach",
 			role: "Co-Founder & CEO",
 			image: "/images/amin.png",
-			signature: "",
+			signature: "Kharmach",
 			bio: "With over a decade of experience in international agricultural trade, Mohamed Amine brings deep industry knowledge and a passion for connecting farmers to global opportunities. His vision is to create a transparent, efficient marketplace that empowers agricultural producers worldwide.",
 		},
 	];
 
 	return (
-		<section className="relative md:h-[calc(100vh-5rem)] bg-white py-8 lg:py-12 font-montserrat flex items-center">
+		<section className="relative md:h-[calc(100vh-5rem)] py-8 lg:py-12 font-montserrat flex items-center">
 			<div className="max-w-7xl mx-auto px-4 w-full">
 				{/* Section Header */}
 				<div className="text-center mb-6 lg:mb-8">
@@ -38,7 +38,7 @@ export default function TeamSection() {
 					{team.map((member, index) => (
 						<div
 							key={index}
-							className="bg-brand-light rounded-2xl overflow-hidden hover:shadow-xl transition-shadow duration-300"
+							className="bg-white rounded-2xl overflow-hidden hover:shadow-xl transition-shadow duration-300"
 						>
 							{/* Photo */}
 							<div className="relative h-[250px] lg:h-[280px] bg-gray-200">
@@ -50,7 +50,7 @@ export default function TeamSection() {
 								/>
 								{member.signature && (
 									<div className="absolute bottom-4 right-4">
-										<p className="text-3xl font-signature text-brand-dark/30">
+										<p className="text-3xl font-creattion text-brand-dark/50">
 											{member.signature}
 										</p>
 									</div>
