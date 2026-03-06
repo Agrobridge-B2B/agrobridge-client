@@ -10,7 +10,6 @@ export default function RegisterPage() {
 					alt="Agriculture background"
 					className="absolute inset-0 h-full w-full object-cover"
 				/>
-			
 			</div>
 
 			{/* Right side - Signup Form */}

@@ -40,7 +40,10 @@ export function LoginForm({
 				<div className="w-full space-y-5 mt-4">
 					{/* Email Input */}
 					<div className="space-y-2">
-						<Label htmlFor="email" className="text-sm font-medium text-gray-700">
+						<Label
+							htmlFor="email"
+							className="text-sm font-medium text-gray-700"
+						>
 							Email
 						</Label>
 						<div className="relative">

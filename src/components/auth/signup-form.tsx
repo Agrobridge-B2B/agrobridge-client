@@ -67,7 +67,10 @@ export function SignupForm({
 				<div className="w-full space-y-3">
 					{/* Full Name */}
 					<div className="space-y-1">
-						<Label htmlFor="fullName" className="text-xs font-medium text-gray-700">
+						<Label
+							htmlFor="fullName"
+							className="text-xs font-medium text-gray-700"
+						>
 							Nom Complet
 						</Label>
 						<div className="relative">
@@ -84,7 +87,10 @@ export function SignupForm({
 
 					{/* Email */}
 					<div className="space-y-1">
-						<Label htmlFor="email" className="text-xs font-medium text-gray-700">
+						<Label
+							htmlFor="email"
+							className="text-xs font-medium text-gray-700"
+						>
 							Email
 						</Label>
 						<div className="relative">
@@ -99,11 +105,13 @@ export function SignupForm({
 						</div>
 					</div>
 
-
 					{/* Company Name (for sellers) */}
 					{accountType === "seller" && (
 						<div className="space-y-1">
-							<Label htmlFor="company" className="text-xs font-medium text-gray-700">
+							<Label
+								htmlFor="company"
+								className="text-xs font-medium text-gray-700"
+							>
 								Nom de l'Entreprise
 							</Label>
 							<div className="relative">
@@ -121,7 +129,10 @@ export function SignupForm({
 
 					{/* Password */}
 					<div className="space-y-1">
-						<Label htmlFor="password" className="text-xs font-medium text-gray-700">
+						<Label
+							htmlFor="password"
+							className="text-xs font-medium text-gray-700"
+						>
 							Mot de Passe
 						</Label>
 						<div className="relative">
@@ -186,7 +197,10 @@ export function SignupForm({
 							required
 							className="mt-0.5 w-3.5 h-3.5 text-brand-green border-gray-300 rounded focus:ring-brand-green"
 						/>
-						<label htmlFor="terms" className="text-[11px] text-gray-600 leading-tight">
+						<label
+							htmlFor="terms"
+							className="text-[11px] text-gray-600 leading-tight"
+						>
 							J'accepte les{" "}
 							<Link
 								href="/terms"
