@@ -1,12 +1,12 @@
-import { LoginForm } from "@/components/login-form";
-import image from "@/assets/images/agriculture_background.webp";
+import { LoginForm } from "@/components/auth/login-form";
+
 export default function LoginPage() {
 	return (
 		<div className="grid min-h-screen lg:grid-cols-2">
 			{/* Left side - Image with tractor */}
 			<div className="relative hidden lg:block">
 				<img
-					src={image.src}
+					src="./images/agri-bg.jpg"
 					alt="Agriculture background with tractor"
 					className="absolute inset-0 h-full w-full object-cover"
 				/>
