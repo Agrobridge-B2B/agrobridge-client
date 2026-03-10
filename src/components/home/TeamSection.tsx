@@ -50,7 +50,10 @@ export default function TeamSection() {
 								/>
 								{member.signature && (
 									<div className="absolute bottom-4 right-4">
-										<p className="text-3xl font-creattion text-brand-dark/50">
+										<p
+											className="text-3xl font-creattion text-brand-dark/50"
+											style={{ fontFamily: "Creattion" }}
+										>
 											{member.signature}
 										</p>
 									</div>
