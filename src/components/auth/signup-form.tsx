@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { useState } from "react";
-import { Eye, EyeOff, User, Mail, Lock, Building2, Phone } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
+import { Eye, EyeOff, User, Mail, Lock, Building2, Globe, Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export function SignupForm({
 	className,
@@ -15,9 +17,44 @@ export function SignupForm({
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 	const [accountType, setAccountType] = useState<"buyer" | "seller">("buyer");
+	const [fullName, setFullName] = useState("");
+	const [email, setEmail] = useState("");
+	const [country, setCountry] = useState("");
+	const [password, setPassword] = useState("");
+	const [confirmPassword, setConfirmPassword] = useState("");
+	const [error, setError] = useState("");
+	const [isLoading, setIsLoading] = useState(false);
+	const { register } = useAuth();
+	const router = useRouter();
+
+	const handleSubmit = async (e: FormEvent) => {
+		e.preventDefault();
+		setError("");
+
+		if (password !== confirmPassword) {
+			setError("Les mots de passe ne correspondent pas");
+			return;
+		}
+
+		setIsLoading(true);
+		const result = await register({
+			fullName,
+			email,
+			password,
+			country,
+			role: accountType,
+		});
+
+		if (result.success) {
+			router.push("/login?registered=true");
+		} else {
+			setError(result.message);
+		}
+		setIsLoading(false);
+	};
 
 	return (
-		<form className={cn("flex flex-col gap-3", className)} {...props}>
+		<form onSubmit={handleSubmit} className={cn("flex flex-col gap-3", className)} {...props}>
 			<div className="flex flex-col items-center gap-2">
 				{/* Logo */}
 				<Link href="/">
@@ -80,6 +117,9 @@ export function SignupForm({
 								type="text"
 								placeholder="Votre nom complet"
 								required
+								value={fullName}
+								onChange={(e) => setFullName(e.target.value)}
+								disabled={isLoading}
 								className="h-10 pl-9 pr-3 text-sm border-2 border-gray-200 rounded-lg focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 transition-all"
 							/>
 						</div>
@@ -100,6 +140,32 @@ export function SignupForm({
 								type="email"
 								placeholder="votre@email.com"
 								required
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+								disabled={isLoading}
+								className="h-10 pl-9 pr-3 text-sm border-2 border-gray-200 rounded-lg focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 transition-all"
+							/>
+						</div>
+					</div>
+
+					{/* Country */}
+					<div className="space-y-1">
+						<Label
+							htmlFor="country"
+							className="text-xs font-medium text-gray-700"
+						>
+							Pays
+						</Label>
+						<div className="relative">
+							<Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+							<Input
+								id="country"
+								type="text"
+								placeholder="Votre pays"
+								required
+								value={country}
+								onChange={(e) => setCountry(e.target.value)}
+								disabled={isLoading}
 								className="h-10 pl-9 pr-3 text-sm border-2 border-gray-200 rounded-lg focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 transition-all"
 							/>
 						</div>
@@ -121,6 +187,7 @@ export function SignupForm({
 									type="text"
 									placeholder="Nom de votre entreprise"
 									required
+									disabled={isLoading}
 									className="h-10 pl-9 pr-3 text-sm border-2 border-gray-200 rounded-lg focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 transition-all"
 								/>
 							</div>
@@ -142,6 +209,9 @@ export function SignupForm({
 								type={showPassword ? "text" : "password"}
 								placeholder="Minimum 8 caractères"
 								required
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								disabled={isLoading}
 								className="h-10 pl-9 pr-10 text-sm border-2 border-gray-200 rounded-lg focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 transition-all"
 							/>
 							<button
@@ -173,6 +243,9 @@ export function SignupForm({
 								type={showConfirmPassword ? "text" : "password"}
 								placeholder="Confirmez votre mot de passe"
 								required
+								value={confirmPassword}
+								onChange={(e) => setConfirmPassword(e.target.value)}
+								disabled={isLoading}
 								className="h-10 pl-9 pr-10 text-sm border-2 border-gray-200 rounded-lg focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 transition-all"
 							/>
 							<button
@@ -218,12 +291,27 @@ export function SignupForm({
 						</label>
 					</div>
 
+					{/* Error Message */}
+					{error && (
+						<div className="rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-red-700">
+							{error}
+						</div>
+					)}
+
 					{/* Submit Button */}
 					<Button
 						type="submit"
-						className="w-full h-10 bg-brand-green hover:bg-brand-green-dark text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all mt-1"
+						disabled={isLoading}
+						className="w-full h-10 bg-brand-green hover:bg-brand-green-dark text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all mt-1 disabled:opacity-60"
 					>
-						Créer mon Compte
+						{isLoading ? (
+							<span className="flex items-center justify-center gap-2">
+								<Loader2 className="w-4 h-4 animate-spin" />
+								Création...
+							</span>
+						) : (
+							"Créer mon Compte"
+						)}
 					</Button>
 
 					{/* Login Link */}

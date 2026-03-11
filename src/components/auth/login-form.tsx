@@ -5,17 +5,55 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { useState } from "react";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
+import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export function LoginForm({
 	className,
 	...props
 }: React.ComponentProps<"form">) {
 	const [showPassword, setShowPassword] = useState(false);
+	const [email, setEmail] = useState("");
+	const [password, setPassword] = useState("");
+	const [error, setError] = useState("");
+	const [isLoading, setIsLoading] = useState(false);
+	const [needsVerification, setNeedsVerification] = useState(false);
+	const { login } = useAuth();
+	const router = useRouter();
+
+	const handleSubmit = async (e: FormEvent) => {
+		e.preventDefault();
+		setError("");
+		setNeedsVerification(false);
+		setIsLoading(true);
+
+		const result = await login(email, password);
+
+		if (result.success) {
+			// Redirect based on user role
+			const userRole = result.user?.role;
+			if (userRole === "admin") {
+				router.push("/agro-admin");
+			} else if (userRole === "seller") {
+				router.push("/seller/dashboard");
+			} else if (userRole === "buyer") {
+				router.push("/buyer/dashboard");
+			} else {
+				router.push("/");
+			}
+		} else {
+			if (result.code === "EMAIL_NOT_VERIFIED") {
+				setNeedsVerification(true);
+			}
+			setError(result.message);
+		}
+		setIsLoading(false);
+	};
 
 	return (
-		<form className={cn("flex flex-col gap-6", className)} {...props}>
+		<form onSubmit={handleSubmit} className={cn("flex flex-col gap-6", className)} {...props}>
 			<div className="flex flex-col items-center gap-6">
 				{/* Logo */}
 				<Link href="/">
@@ -53,6 +91,9 @@ export function LoginForm({
 								type="email"
 								placeholder="votre@email.com"
 								required
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+								disabled={isLoading}
 								className="h-12 pl-10 pr-4 border-2 border-gray-200 rounded-lg focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 transition-all"
 							/>
 						</div>
@@ -81,6 +122,9 @@ export function LoginForm({
 								type={showPassword ? "text" : "password"}
 								placeholder="Votre mot de passe"
 								required
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								disabled={isLoading}
 								className="h-12 pl-10 pr-12 border-2 border-gray-200 rounded-lg focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 transition-all"
 							/>
 							<button
@@ -109,12 +153,35 @@ export function LoginForm({
 						</label>
 					</div>
 
+					{/* Error Message */}
+					{error && (
+						<div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+							<p>{error}</p>
+							{needsVerification && (
+								<Link
+									href={`/resend-verification?email=${encodeURIComponent(email)}`}
+									className="mt-1 block text-brand-green font-medium hover:underline"
+								>
+									Resend verification email
+								</Link>
+							)}
+						</div>
+					)}
+
 					{/* Login Button */}
 					<Button
 						type="submit"
-						className="w-full h-12 bg-brand-green hover:bg-brand-green-dark text-white font-semibold text-base shadow-md hover:shadow-lg transition-all"
+						disabled={isLoading}
+						className="w-full h-12 bg-brand-green hover:bg-brand-green-dark text-white font-semibold text-base shadow-md hover:shadow-lg transition-all disabled:opacity-60"
 					>
-						Se Connecter
+						{isLoading ? (
+							<span className="flex items-center justify-center gap-2">
+								<Loader2 className="w-5 h-5 animate-spin" />
+								Connexion...
+							</span>
+						) : (
+							"Se Connecter"
+						)}
 					</Button>
 
 					{/* Divider */}
