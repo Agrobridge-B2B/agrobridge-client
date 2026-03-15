@@ -1,12 +1,23 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { getApiErrorMessage } from "@/lib/api";
+import { register } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { useState } from "react";
-import { Eye, EyeOff, User, Mail, Lock, Building2, Phone } from "lucide-react";
+import { type FormEvent, useState } from "react";
+import {
+	Building2,
+	Eye,
+	EyeOff,
+	Globe2,
+	Loader2,
+	Lock,
+	Mail,
+	User,
+} from "lucide-react";
 
 export function SignupForm({
 	className,
@@ -15,9 +26,71 @@ export function SignupForm({
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 	const [accountType, setAccountType] = useState<"buyer" | "seller">("buyer");
+	const [fullName, setFullName] = useState("");
+	const [email, setEmail] = useState("");
+	const [country, setCountry] = useState("");
+	const [company, setCompany] = useState("");
+	const [password, setPassword] = useState("");
+	const [confirmPassword, setConfirmPassword] = useState("");
+	const [termsAccepted, setTermsAccepted] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+	const isSeller = accountType === "seller";
+
+	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+		event.preventDefault();
+		setErrorMessage(null);
+		setSuccessMessage(null);
+
+		if (password.length < 8) {
+			setErrorMessage("Le mot de passe doit contenir au moins 8 caractères.");
+			return;
+		}
+
+		if (password !== confirmPassword) {
+			setErrorMessage("Les mots de passe ne correspondent pas.");
+			return;
+		}
+
+		if (!termsAccepted) {
+			setErrorMessage("Vous devez accepter les conditions et la politique.");
+			return;
+		}
+
+		if (isSeller && company.trim().length === 0) {
+			setErrorMessage("Le nom de l'entreprise est requis pour un vendeur.");
+			return;
+		}
+
+		try {
+			setIsSubmitting(true);
+			await register({
+				fullName: fullName.trim(),
+				email: email.trim().toLowerCase(),
+				password,
+				country: country.trim(),
+				role: accountType,
+			});
+			setSuccessMessage(
+				"Compte créé. Vérifiez votre email pour activer votre compte.",
+			);
+			setPassword("");
+			setConfirmPassword("");
+		} catch (error) {
+			setErrorMessage(getApiErrorMessage(error));
+		} finally {
+			setIsSubmitting(false);
+		}
+	}
 
 	return (
-		<form className={cn("flex flex-col gap-3", className)} {...props}>
+		<form
+			className={cn("flex flex-col gap-3", className)}
+			onSubmit={handleSubmit}
+			{...props}
+		>
 			<div className="flex flex-col items-center gap-2">
 				{/* Logo */}
 				<Link href="/">
@@ -65,12 +138,27 @@ export function SignupForm({
 
 				{/* Form Fields */}
 				<div className="w-full space-y-3">
+					{errorMessage && (
+						<div
+							className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700"
+							role="alert"
+						>
+							{errorMessage}
+						</div>
+					)}
+
+					{successMessage && (
+						<div
+							className="rounded-md border border-green-200 bg-green-50 p-2 text-xs text-green-700"
+							role="status"
+						>
+							{successMessage}
+						</div>
+					)}
+
 					{/* Full Name */}
 					<div className="space-y-1">
-						<Label
-							htmlFor="fullName"
-							className="text-xs font-medium text-gray-700"
-						>
+						<Label htmlFor="fullName" className="text-xs font-medium text-gray-700">
 							Nom Complet
 						</Label>
 						<div className="relative">
@@ -79,7 +167,10 @@ export function SignupForm({
 								id="fullName"
 								type="text"
 								placeholder="Votre nom complet"
+								value={fullName}
+								onChange={(event) => setFullName(event.target.value)}
 								required
+								disabled={isSubmitting}
 								className="h-10 pl-9 pr-3 text-sm border-2 border-gray-200 rounded-lg focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 transition-all"
 							/>
 						</div>
@@ -87,10 +178,7 @@ export function SignupForm({
 
 					{/* Email */}
 					<div className="space-y-1">
-						<Label
-							htmlFor="email"
-							className="text-xs font-medium text-gray-700"
-						>
+						<Label htmlFor="email" className="text-xs font-medium text-gray-700">
 							Email
 						</Label>
 						<div className="relative">
@@ -99,19 +187,39 @@ export function SignupForm({
 								id="email"
 								type="email"
 								placeholder="votre@email.com"
+								value={email}
+								onChange={(event) => setEmail(event.target.value)}
 								required
+								disabled={isSubmitting}
+								className="h-10 pl-9 pr-3 text-sm border-2 border-gray-200 rounded-lg focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 transition-all"
+							/>
+						</div>
+					</div>
+
+					{/* Country */}
+					<div className="space-y-1">
+						<Label htmlFor="country" className="text-xs font-medium text-gray-700">
+							Pays
+						</Label>
+						<div className="relative">
+							<Globe2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+							<Input
+								id="country"
+								type="text"
+								placeholder="Votre pays"
+								value={country}
+								onChange={(event) => setCountry(event.target.value)}
+								required
+								disabled={isSubmitting}
 								className="h-10 pl-9 pr-3 text-sm border-2 border-gray-200 rounded-lg focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 transition-all"
 							/>
 						</div>
 					</div>
 
 					{/* Company Name (for sellers) */}
-					{accountType === "seller" && (
+					{isSeller && (
 						<div className="space-y-1">
-							<Label
-								htmlFor="company"
-								className="text-xs font-medium text-gray-700"
-							>
+							<Label htmlFor="company" className="text-xs font-medium text-gray-700">
 								Nom de l'Entreprise
 							</Label>
 							<div className="relative">
@@ -120,7 +228,10 @@ export function SignupForm({
 									id="company"
 									type="text"
 									placeholder="Nom de votre entreprise"
+									value={company}
+									onChange={(event) => setCompany(event.target.value)}
 									required
+									disabled={isSubmitting}
 									className="h-10 pl-9 pr-3 text-sm border-2 border-gray-200 rounded-lg focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 transition-all"
 								/>
 							</div>
@@ -129,10 +240,7 @@ export function SignupForm({
 
 					{/* Password */}
 					<div className="space-y-1">
-						<Label
-							htmlFor="password"
-							className="text-xs font-medium text-gray-700"
-						>
+						<Label htmlFor="password" className="text-xs font-medium text-gray-700">
 							Mot de Passe
 						</Label>
 						<div className="relative">
@@ -141,7 +249,10 @@ export function SignupForm({
 								id="password"
 								type={showPassword ? "text" : "password"}
 								placeholder="Minimum 8 caractères"
+								value={password}
+								onChange={(event) => setPassword(event.target.value)}
 								required
+								disabled={isSubmitting}
 								className="h-10 pl-9 pr-10 text-sm border-2 border-gray-200 rounded-lg focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 transition-all"
 							/>
 							<button
@@ -172,7 +283,10 @@ export function SignupForm({
 								id="confirmPassword"
 								type={showConfirmPassword ? "text" : "password"}
 								placeholder="Confirmez votre mot de passe"
+								value={confirmPassword}
+								onChange={(event) => setConfirmPassword(event.target.value)}
 								required
+								disabled={isSubmitting}
 								className="h-10 pl-9 pr-10 text-sm border-2 border-gray-200 rounded-lg focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 transition-all"
 							/>
 							<button
@@ -194,13 +308,13 @@ export function SignupForm({
 						<input
 							type="checkbox"
 							id="terms"
+							checked={termsAccepted}
+							onChange={(event) => setTermsAccepted(event.target.checked)}
 							required
+							disabled={isSubmitting}
 							className="mt-0.5 w-3.5 h-3.5 text-brand-green border-gray-300 rounded focus:ring-brand-green"
 						/>
-						<label
-							htmlFor="terms"
-							className="text-[11px] text-gray-600 leading-tight"
-						>
+						<label htmlFor="terms" className="text-[11px] text-gray-600 leading-tight">
 							J'accepte les{" "}
 							<Link
 								href="/terms"
@@ -221,9 +335,17 @@ export function SignupForm({
 					{/* Submit Button */}
 					<Button
 						type="submit"
+						disabled={isSubmitting}
 						className="w-full h-10 bg-brand-green hover:bg-brand-green-dark text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all mt-1"
 					>
-						Créer mon Compte
+						{isSubmitting ? (
+							<span className="inline-flex items-center gap-2">
+								<Loader2 className="h-4 w-4 animate-spin" />
+								Création...
+							</span>
+						) : (
+							"Créer mon Compte"
+						)}
 					</Button>
 
 					{/* Login Link */}
@@ -239,7 +361,7 @@ export function SignupForm({
 						</span>
 					</div>
 				</div>
-			</div>
-		</form>
-	);
-}
+				</div>
+			</form>
+		);
+	}

@@ -1,21 +1,82 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { getApiErrorMessage } from "@/lib/api";
+import { login } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { useState } from "react";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useState } from "react";
+import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 
 export function LoginForm({
 	className,
 	...props
 }: React.ComponentProps<"form">) {
+	const router = useRouter();
 	const [showPassword, setShowPassword] = useState(false);
+	const [email, setEmail] = useState("");
+	const [password, setPassword] = useState("");
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+	function readToken(payload: Record<string, unknown>): string | null {
+		const token = payload.token;
+		if (typeof token === "string" && token.trim().length > 0) {
+			return token;
+		}
+
+		const accessToken = payload.accessToken;
+		if (typeof accessToken === "string" && accessToken.trim().length > 0) {
+			return accessToken;
+		}
+
+		const nested = payload.data;
+		if (nested && typeof nested === "object") {
+			const nestedToken = (nested as { token?: unknown }).token;
+			if (typeof nestedToken === "string" && nestedToken.trim().length > 0) {
+				return nestedToken;
+			}
+		}
+
+		return null;
+	}
+
+	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+		event.preventDefault();
+		setErrorMessage(null);
+		setSuccessMessage(null);
+
+		try {
+			setIsSubmitting(true);
+			const response = await login({
+				email: email.trim().toLowerCase(),
+				password,
+			});
+
+			const token = readToken(response);
+			if (token) {
+				localStorage.setItem("agrobridge_auth_token", token);
+			}
+
+			setSuccessMessage("Connexion réussie.");
+			router.push("/dashboard");
+		} catch (error) {
+			setErrorMessage(getApiErrorMessage(error));
+		} finally {
+			setIsSubmitting(false);
+		}
+	}
 
 	return (
-		<form className={cn("flex flex-col gap-6", className)} {...props}>
+		<form
+			className={cn("flex flex-col gap-6", className)}
+			onSubmit={handleSubmit}
+			{...props}
+		>
 			<div className="flex flex-col items-center gap-6">
 				{/* Logo */}
 				<Link href="/">
@@ -38,6 +99,24 @@ export function LoginForm({
 
 				{/* Form Fields Container */}
 				<div className="w-full space-y-5 mt-4">
+					{errorMessage && (
+						<div
+							className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+							role="alert"
+						>
+							{errorMessage}
+						</div>
+					)}
+
+					{successMessage && (
+						<div
+							className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700"
+							role="status"
+						>
+							{successMessage}
+						</div>
+					)}
+
 					{/* Email Input */}
 					<div className="space-y-2">
 						<Label
@@ -52,7 +131,10 @@ export function LoginForm({
 								id="email"
 								type="email"
 								placeholder="votre@email.com"
+								value={email}
+								onChange={(event) => setEmail(event.target.value)}
 								required
+								disabled={isSubmitting}
 								className="h-12 pl-10 pr-4 border-2 border-gray-200 rounded-lg focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 transition-all"
 							/>
 						</div>
@@ -80,7 +162,10 @@ export function LoginForm({
 								id="password"
 								type={showPassword ? "text" : "password"}
 								placeholder="Votre mot de passe"
+								value={password}
+								onChange={(event) => setPassword(event.target.value)}
 								required
+								disabled={isSubmitting}
 								className="h-12 pl-10 pr-12 border-2 border-gray-200 rounded-lg focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 transition-all"
 							/>
 							<button
@@ -112,9 +197,17 @@ export function LoginForm({
 					{/* Login Button */}
 					<Button
 						type="submit"
+						disabled={isSubmitting}
 						className="w-full h-12 bg-brand-green hover:bg-brand-green-dark text-white font-semibold text-base shadow-md hover:shadow-lg transition-all"
 					>
-						Se Connecter
+						{isSubmitting ? (
+							<span className="inline-flex items-center gap-2">
+								<Loader2 className="h-4 w-4 animate-spin" />
+								Connexion...
+							</span>
+						) : (
+							"Se Connecter"
+						)}
 					</Button>
 
 					{/* Divider */}
