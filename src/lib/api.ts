@@ -1,12 +1,13 @@
 import axios from "axios";
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ?? "";
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ?? "http://localhost:5000/api";
 
 export const api = axios.create({
 	baseURL: apiBaseUrl,
 	headers: {
 		"Content-Type": "application/json",
 	},
+	withCredentials: true, // Enable sending cookies with requests
 });
 
 export function getApiErrorMessage(

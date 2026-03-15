@@ -2,13 +2,13 @@
 
 import { cn } from "@/lib/utils";
 import { getApiErrorMessage } from "@/lib/api";
-import { login } from "@/lib/auth";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useState, useEffect } from "react";
 import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 
 export function LoginForm({
@@ -16,6 +16,7 @@ export function LoginForm({
 	...props
 }: React.ComponentProps<"form">) {
 	const router = useRouter();
+	const { login, user, isLoading } = useAuth();
 	const [showPassword, setShowPassword] = useState(false);
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -23,27 +24,12 @@ export function LoginForm({
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-	function readToken(payload: Record<string, unknown>): string | null {
-		const token = payload.token;
-		if (typeof token === "string" && token.trim().length > 0) {
-			return token;
+	// Redirect authenticated users to dashboard
+	useEffect(() => {
+		if (!isLoading && user) {
+			router.replace("/dashboard");
 		}
-
-		const accessToken = payload.accessToken;
-		if (typeof accessToken === "string" && accessToken.trim().length > 0) {
-			return accessToken;
-		}
-
-		const nested = payload.data;
-		if (nested && typeof nested === "object") {
-			const nestedToken = (nested as { token?: unknown }).token;
-			if (typeof nestedToken === "string" && nestedToken.trim().length > 0) {
-				return nestedToken;
-			}
-		}
-
-		return null;
-	}
+	}, [user, isLoading, router]);
 
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -52,21 +38,11 @@ export function LoginForm({
 
 		try {
 			setIsSubmitting(true);
-			const response = await login({
-				email: email.trim().toLowerCase(),
-				password,
-			});
-
-			const token = readToken(response);
-			if (token) {
-				localStorage.setItem("agrobridge_auth_token", token);
-			}
-
-			setSuccessMessage("Connexion réussie.");
+			await login(email.trim().toLowerCase(), password);
+			// Redirect immediately without showing success message
 			router.push("/dashboard");
 		} catch (error) {
 			setErrorMessage(getApiErrorMessage(error));
-		} finally {
 			setIsSubmitting(false);
 		}
 	}
