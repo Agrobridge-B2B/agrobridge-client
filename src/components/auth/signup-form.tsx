@@ -3,11 +3,13 @@
 import { cn } from "@/lib/utils";
 import { getApiErrorMessage } from "@/lib/api";
 import { register } from "@/lib/auth";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { type FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useState, useEffect } from "react";
 import {
 	Building2,
 	Eye,
@@ -23,7 +25,16 @@ export function SignupForm({
 	className,
 	...props
 }: React.ComponentProps<"form">) {
+	const router = useRouter();
+	const { user, isLoading } = useAuth();
 	const [showPassword, setShowPassword] = useState(false);
+
+	// Redirect authenticated users to dashboard
+	useEffect(() => {
+		if (!isLoading && user) {
+			router.replace("/dashboard");
+		}
+	}, [user, isLoading, router]);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 	const [accountType, setAccountType] = useState<"buyer" | "seller">("buyer");
 	const [fullName, setFullName] = useState("");

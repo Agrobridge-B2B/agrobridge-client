@@ -1,12 +1,37 @@
-export default function DashboardPage() {
-	return (
-		<div className="min-h-screen bg-brand-light flex items-center justify-center p-6">
-			<div className="w-full max-w-2xl rounded-xl bg-white p-8 shadow-md">
-				<h1 className="text-3xl font-bold text-brand-green">Dashboard</h1>
-				<p className="mt-3 text-gray-600">
-					Connexion réussie. Votre espace personnel est prêt.
-				</p>
-			</div>
-		</div>
-	);
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+
+export default function DashboardRedirect() {
+	const { user, isLoading } = useAuth();
+	const router = useRouter();
+
+	useEffect(() => {
+		if (isLoading) return;
+
+		if (!user) {
+			router.replace("/login");
+			return;
+		}
+
+		// Redirect based on user role
+		switch (user.role) {
+			case "admin":
+				router.replace("/agro-admin/dashboard");
+				break;
+			case "seller":
+				router.replace("/seller/dashboard");
+				break;
+			case "buyer":
+				router.replace("/buyer/dashboard");
+				break;
+			default:
+				router.replace("/login");
+		}
+	}, [user, isLoading, router]);
+
+	// Return null to avoid flash of content
+	return null;
 }
