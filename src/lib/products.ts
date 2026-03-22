@@ -2,7 +2,7 @@ import { api } from "@/lib/api";
 
 export interface Product {
 	_id: string;
-	seller: string | { _id: string; fullName: string; email: string; country: string };
+	seller: string | { _id: string; fullName: string; email: string; country: string; isCertified?: boolean };
 	name: string;
 	slug: string;
 	description: string;
