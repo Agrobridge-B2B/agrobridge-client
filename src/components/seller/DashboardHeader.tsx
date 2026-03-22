@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
+import { getImageUrl } from "@/lib/upload";
 import { Button } from "@/components/ui/button";
 import { Search, Bell, ShoppingCart, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
