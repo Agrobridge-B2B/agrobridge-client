@@ -12,7 +12,10 @@ interface User {
 	fullName: string;
 	role: UserRole;
 	isVerified: boolean;
+	isCertified: boolean;
 	country?: string;
+	profileImage?: string;
+	certificationStatus?: "none" | "pending" | "approved" | "rejected";
 }
 
 interface AuthContextType {
