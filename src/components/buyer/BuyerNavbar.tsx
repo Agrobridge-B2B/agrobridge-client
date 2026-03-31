@@ -6,12 +6,14 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, User, ShoppingCart } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
 import { PRODUCT_CATEGORIES } from "@/lib/validations/product";
 
 export function BuyerNavbar() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const { user, isAuthenticated } = useAuth();
+	const { itemCount, isReady } = useCart();
 
 	const [searchValue, setSearchValue] = useState(searchParams.get("search") ?? "");
 	const [categoryValue, setCategoryValue] = useState(searchParams.get("category") ?? "");
@@ -41,7 +43,7 @@ export function BuyerNavbar() {
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 				<div className="flex items-center justify-between h-16 gap-4">
 					{/* Logo */}
-					<Link href="/buyer/products" className="flex-shrink-0">
+					<Link href="/buyer/products" className="shrink-0">
 						<Image
 							src="/logo/agrobridge-01.svg"
 							alt="Agrobridge"
@@ -96,16 +98,18 @@ export function BuyerNavbar() {
 								<User className="w-5 h-5" />
 							</Link>
 						)}
-						<button
-							type="button"
+						<Link
+							href="/buyer/cart"
 							className="relative p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors"
 							title="Panier"
 						>
 							<ShoppingCart className="w-5 h-5" />
-							<span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-brand-green text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-								0
-							</span>
-						</button>
+							{(isReady ? itemCount : 0) > 0 && (
+								<span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 bg-brand-green text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+									{itemCount > 99 ? "99+" : itemCount}
+								</span>
+							)}
+						</Link>
 					</div>
 				</div>
 			</div>

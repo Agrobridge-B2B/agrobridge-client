@@ -1,6 +1,10 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, Check } from "lucide-react";
+import { MapPin, Check, ShoppingCart } from "lucide-react";
+import { useCart } from "@/context/CartContext";
+import { useToastContext } from "@/context/ToastContext";
 import { getImageUrl } from "@/lib/upload";
 import type { Product } from "@/lib/products";
 
@@ -15,11 +19,18 @@ function isSellerCertified(seller: Product["seller"]): boolean {
 export function BuyerProductCard({ product }: BuyerProductCardProps) {
 	const certified = isSellerCertified(product.seller);
 	const unitLabel = product.unit.toLowerCase();
+	const { addItem } = useCart();
+	const { addToast } = useToastContext();
+
+	const handleAddToCart = () => {
+		addItem(product, product.minOrderQuantity || 1);
+		addToast(`${product.name} ajouté au panier avec succès!`);
+	};
 
 	return (
 		<div className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group">
 			{/* Image */}
-			<div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
+			<div className="relative aspect-4/3 bg-gray-100 overflow-hidden">
 				{product.images?.[0] ? (
 					<Image
 						src={getImageUrl(product.images[0])}
@@ -72,12 +83,22 @@ export function BuyerProductCard({ product }: BuyerProductCardProps) {
 					</p>
 				</div>
 
-				<Link
-					href={`/buyer/products/${product._id}`}
-					className="block w-full text-center bg-brand-green text-white text-sm font-medium py-2.5 rounded-lg hover:bg-brand-green/90 transition-colors"
-				>
-					Voir détails
-				</Link>
+				<div className="flex gap-2">
+					<button
+						type="button"
+						onClick={handleAddToCart}
+						className="inline-flex items-center justify-center gap-2 flex-1 border border-gray-200 text-gray-700 text-sm font-medium py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
+					>
+						<ShoppingCart className="w-4 h-4" />
+						Ajouter
+					</button>
+					<Link
+						href={`/buyer/products/${product._id}`}
+						className="block flex-1 text-center bg-brand-green text-white text-sm font-medium py-2.5 rounded-lg hover:bg-brand-green/90 transition-colors"
+					>
+						Voir détails
+					</Link>
+				</div>
 			</div>
 		</div>
 	);

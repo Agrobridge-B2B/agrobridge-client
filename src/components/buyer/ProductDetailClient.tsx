@@ -3,7 +3,10 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, MapPin, Check, Star, CreditCard, Minus, Plus } from "lucide-react";
+import { useCart } from "@/context/CartContext";
+import { useToastContext } from "@/context/ToastContext";
 import { getImageUrl } from "@/lib/upload";
 import type { Product } from "@/lib/products";
 
@@ -22,20 +25,34 @@ function getSellerInfo(seller: Product["seller"]) {
 }
 
 export function ProductDetailClient({ product }: ProductDetailClientProps) {
+	const router = useRouter();
+	const { addItem, setItemQuantity, isInCart } = useCart();
+	const { addToast } = useToastContext();
 	const seller = getSellerInfo(product.seller);
 	const unitLabel = product.unit.toLowerCase();
+	const minQuantity = product.minOrderQuantity || 1;
 
-	const [quantity, setQuantity] = useState(product.minOrderQuantity || 1);
+	const [quantity, setQuantity] = useState(minQuantity);
 	const [selectedImage, setSelectedImage] = useState(0);
 
 	const total = quantity * product.pricePerUnit;
 
 	function decrementQty() {
-		setQuantity((prev) => Math.max(product.minOrderQuantity || 1, prev - 1));
+		setQuantity((prev) => Math.max(minQuantity, prev - 1));
 	}
 
 	function incrementQty() {
 		setQuantity((prev) => prev + 1);
+	}
+
+	function handleAddToCart() {
+		addItem(product, quantity);
+		addToast(`${product.name} (${quantity} ${unitLabel}) ajouté au panier avec succès!`);
+	}
+
+	function handleBuyNow() {
+		setItemQuantity(product, quantity);
+		router.push("/buyer/checkout");
 	}
 
 	return (
@@ -86,7 +103,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 								<button
 									key={idx}
 									onClick={() => setSelectedImage(idx)}
-									className={`relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors ${
+									className={`relative w-16 h-16 rounded-lg overflow-hidden shrink-0 border-2 transition-colors ${
 										idx === selectedImage
 											? "border-brand-green"
 											: "border-transparent hover:border-gray-300"
@@ -152,7 +169,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 							<span className="text-sm font-normal text-gray-600"> /{unitLabel}</span>
 						</p>
 						<p className="text-sm text-gray-500 mt-1">
-							Stock disponible: {product.minOrderQuantity || 1} {unitLabel} minimum
+							Commande minimale: {minQuantity} {unitLabel}
 						</p>
 					</div>
 
@@ -172,12 +189,12 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 									value={quantity}
 									onChange={(e) => {
 										const val = parseInt(e.target.value, 10);
-										if (!isNaN(val) && val >= (product.minOrderQuantity || 1)) {
+										if (!isNaN(val) && val >= minQuantity) {
 											setQuantity(val);
 										}
 									}}
 									className="w-16 text-center border-x border-gray-300 py-2 text-sm font-medium focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-									min={product.minOrderQuantity || 1}
+									min={minQuantity}
 								/>
 								<button
 									onClick={incrementQty}
@@ -215,18 +232,27 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 							/>
 							<CreditCard className="w-5 h-5 text-gray-500" />
 							<span className="text-sm font-medium text-gray-700">
-								Paiement en ligne (Stripe)
+								Paiement securise en ligne
 							</span>
 						</label>
 					</div>
 
-					{/* CTA Button */}
-					<button
-						type="button"
-						className="w-full bg-brand-green text-white font-semibold py-3.5 rounded-xl hover:bg-brand-green/90 transition-colors text-sm"
-					>
-						Acheter maintenant
-					</button>
+					<div className="flex flex-col sm:flex-row gap-3">
+						<button
+							type="button"
+							onClick={handleAddToCart}
+							className="w-full border border-gray-200 text-gray-700 font-semibold py-3.5 rounded-xl hover:bg-gray-50 transition-colors text-sm"
+						>
+							{isInCart(product._id) ? "Ajouter de nouveau" : "Ajouter au panier"}
+						</button>
+						<button
+							type="button"
+							onClick={handleBuyNow}
+							className="w-full bg-brand-green text-white font-semibold py-3.5 rounded-xl hover:bg-brand-green/90 transition-colors text-sm"
+						>
+							Passer au paiement
+						</button>
+					</div>
 				</div>
 			</div>
 
