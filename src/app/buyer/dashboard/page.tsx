@@ -1,17 +1,53 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { getBuyerOrderSummary, type BuyerOrderSummary } from "@/lib/orders";
+import { getApiErrorMessage } from "@/lib/api";
 import { ShoppingCart, Package, User, LogOut } from "lucide-react";
 
 function BuyerDashboardContent() {
 	const { user, logout } = useAuth();
+	const { itemCount } = useCart();
 	const router = useRouter();
+	const [summary, setSummary] = useState<BuyerOrderSummary>({
+		activeOrders: 0,
+		totalOrders: 0,
+		supplierCount: 0,
+		totalSpent: 0,
+	});
+	const [summaryError, setSummaryError] = useState<string | null>(null);
 
-	const handleLogout = () => {
-		logout();
+	useEffect(() => {
+		let isMounted = true;
+
+		async function loadSummary() {
+			try {
+				const nextSummary = await getBuyerOrderSummary();
+				if (isMounted) {
+					setSummary(nextSummary);
+				}
+			} catch (error) {
+				if (isMounted) {
+					setSummaryError(getApiErrorMessage(error, "Impossible de charger vos statistiques."));
+				}
+			}
+		}
+
+		loadSummary();
+
+		return () => {
+			isMounted = false;
+		};
+	}, []);
+
+	const handleLogout = async () => {
+		await logout();
 		router.push("/login");
 	};
 
@@ -57,7 +93,7 @@ function BuyerDashboardContent() {
 							</div>
 							<div>
 								<p className="text-sm text-gray-600">Commandes Actives</p>
-								<p className="text-2xl font-bold text-gray-900">0</p>
+								<p className="text-2xl font-bold text-gray-900">{summary.activeOrders}</p>
 							</div>
 						</div>
 					</div>
@@ -68,8 +104,8 @@ function BuyerDashboardContent() {
 								<Package className="w-6 h-6 text-blue-600" />
 							</div>
 							<div>
-								<p className="text-sm text-gray-600">Produits Favoris</p>
-								<p className="text-2xl font-bold text-gray-900">0</p>
+								<p className="text-sm text-gray-600">Articles dans le panier</p>
+								<p className="text-2xl font-bold text-gray-900">{itemCount}</p>
 							</div>
 						</div>
 					</div>
@@ -81,11 +117,17 @@ function BuyerDashboardContent() {
 							</div>
 							<div>
 								<p className="text-sm text-gray-600">Fournisseurs</p>
-								<p className="text-2xl font-bold text-gray-900">0</p>
+								<p className="text-2xl font-bold text-gray-900">{summary.supplierCount}</p>
 							</div>
 						</div>
 					</div>
 				</div>
+
+				{summaryError && (
+					<div className="mb-8 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+						{summaryError}
+					</div>
+				)}
 
 				{/* User Info Card */}
 				<div className="bg-white rounded-lg shadow p-6">
@@ -124,14 +166,34 @@ function BuyerDashboardContent() {
 					</div>
 				</div>
 
-				{/* Placeholder for future features */}
-				<div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-					<h3 className="text-lg font-semibold text-blue-900 mb-2">
-						Tableau de Bord en Construction
-					</h3>
-					<p className="text-blue-700">
-						Les fonctionnalités d'achat seront bientôt disponibles.
-					</p>
+				<div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+					<Link
+						href="/buyer/products"
+						className="rounded-lg border border-gray-200 bg-white p-5 hover:border-brand-green hover:shadow-sm transition-all"
+					>
+						<p className="text-sm text-gray-500">Marketplace</p>
+						<p className="mt-2 text-base font-semibold text-gray-900">
+							Explorer de nouveaux produits
+						</p>
+					</Link>
+					<Link
+						href="/buyer/cart"
+						className="rounded-lg border border-gray-200 bg-white p-5 hover:border-brand-green hover:shadow-sm transition-all"
+					>
+						<p className="text-sm text-gray-500">Panier</p>
+						<p className="mt-2 text-base font-semibold text-gray-900">
+							Reprendre votre commande en cours
+						</p>
+					</Link>
+					<div className="rounded-lg border border-gray-200 bg-white p-5">
+						<p className="text-sm text-gray-500">Depenses cumulees</p>
+						<p className="mt-2 text-base font-semibold text-gray-900">
+							{summary.totalSpent.toLocaleString("fr-FR", {
+								style: "currency",
+								currency: "EUR",
+							})}
+						</p>
+					</div>
 				</div>
 			</main>
 		</div>
