@@ -25,7 +25,7 @@ export default function DashboardRedirect() {
 				router.replace("/seller/dashboard");
 				break;
 			case "buyer":
-				router.replace("/buyer/dashboard");
+				router.replace("/buyer/products");
 				break;
 			default:
 				router.replace("/login");
