@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -11,6 +12,10 @@ import {
 	Star,
 	Settings,
 } from "lucide-react";
+import { getUnreadMessagesCount } from "@/lib/messages";
+
+/** How often to refresh the unread badge (ms) */
+const UNREAD_POLL_INTERVAL = 15_000;
 
 const menuItems = [
 	{
@@ -32,6 +37,7 @@ const menuItems = [
 		label: "Messages",
 		icon: MessageSquare,
 		href: "/seller/messages",
+		hasBadge: true,
 	},
 	{
 		label: "Avis",
@@ -47,6 +53,29 @@ const menuItems = [
 
 export function Sidebar() {
 	const pathname = usePathname();
+	const [unreadMessages, setUnreadMessages] = useState(0);
+
+	// Fetch unread count on mount + periodically
+	useEffect(() => {
+		let isMounted = true;
+
+		async function loadUnread() {
+			try {
+				const count = await getUnreadMessagesCount();
+				if (isMounted) setUnreadMessages(count);
+			} catch {
+				// Sidebar stays functional even if count fails
+			}
+		}
+
+		loadUnread();
+		const interval = setInterval(loadUnread, UNREAD_POLL_INTERVAL);
+
+		return () => {
+			isMounted = false;
+			clearInterval(interval);
+		};
+	}, []);
 
 	return (
 		<aside className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
@@ -67,6 +96,10 @@ export function Sidebar() {
 					{menuItems.map((item) => {
 						const Icon = item.icon;
 						const isActive = pathname === item.href;
+						const showBadge =
+							"hasBadge" in item &&
+							item.hasBadge &&
+							unreadMessages > 0;
 
 						return (
 							<li key={item.href}>
@@ -80,7 +113,21 @@ export function Sidebar() {
 									)}
 								>
 									<Icon className="w-5 h-5" />
-									<span>{item.label}</span>
+									<span className="flex-1">{item.label}</span>
+									{showBadge && (
+										<span
+											className={cn(
+												"min-w-5 h-5 px-1.5 text-[10px] font-bold rounded-full flex items-center justify-center",
+												isActive
+													? "bg-white text-brand-green"
+													: "bg-red-500 text-white"
+											)}
+										>
+											{unreadMessages > 99
+												? "99+"
+												: unreadMessages}
+										</span>
+									)}
 								</Link>
 							</li>
 						);

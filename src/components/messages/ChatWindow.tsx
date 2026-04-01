@@ -71,6 +71,20 @@ function getSenderInfo(sender: string | MessageParticipant): {
 	return { id: String(sender), name: "" };
 }
 
+/**
+ * Merge new messages into the existing array without duplicates.
+ * Preserves server-side ordering (by createdAt + _id).
+ */
+function mergeMessages(existing: Message[], incoming: Message[]): Message[] {
+	if (incoming.length === 0) return existing;
+
+	const existingIds = new Set(existing.map((m) => m._id));
+	const unique = incoming.filter((m) => !existingIds.has(m._id));
+	if (unique.length === 0) return existing; // No change — skip re-render
+
+	return [...existing, ...unique];
+}
+
 export function ChatWindow({
 	conversation,
 	currentUserId,
@@ -85,18 +99,29 @@ export function ChatWindow({
 	const chatContainerRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 
+	// Tracks the _id of the last known message for incremental polling
+	const lastMessageIdRef = useRef<string | null>(null);
+
 	const participant = conversation.otherParticipant;
+
+	// Keep the cursor ref in sync whenever messages change
+	useEffect(() => {
+		if (messages.length > 0) {
+			lastMessageIdRef.current = messages[messages.length - 1]._id;
+		}
+	}, [messages]);
 
 	const scrollToBottom = useCallback(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 	}, []);
 
-	// Load messages when conversation changes
+	// ── Initial full load when conversation changes ──
 	useEffect(() => {
 		let isMounted = true;
 
 		async function loadMessages() {
 			setIsLoading(true);
+			lastMessageIdRef.current = null; // Reset cursor for new conversation
 			try {
 				const result = await getMessages(conversation._id);
 				if (isMounted) {
@@ -119,28 +144,49 @@ export function ChatWindow({
 		};
 	}, [conversation._id]);
 
-	// Auto-scroll to bottom when new messages arrive
+	// ── Auto-scroll when new messages arrive ──
 	useEffect(() => {
 		if (!isLoading) {
 			scrollToBottom();
 		}
 	}, [messages, isLoading, scrollToBottom]);
 
-	// Poll for new messages every 5 seconds to simulate real-time updates
+	// ── Incremental polling — only fetches messages after the last known _id ──
 	useEffect(() => {
 		const interval = setInterval(async () => {
 			try {
-				const result = await getMessages(conversation._id);
-				setMessages(result.messages);
-				await markConversationAsRead(conversation._id);
+				const cursor = lastMessageIdRef.current ?? undefined;
+				const result = await getMessages(
+					conversation._id,
+					1,
+					50,
+					cursor
+				);
+
+				if (result.messages.length > 0) {
+					setMessages((prev) =>
+						mergeMessages(prev, result.messages)
+					);
+
+					// Only mark as read if there are incoming messages
+					// from the other participant (avoid unnecessary API calls)
+					const hasIncoming = result.messages.some((m) => {
+						const sid = getSenderInfo(m.sender).id;
+						return sid !== currentUserId;
+					});
+					if (hasIncoming) {
+						await markConversationAsRead(conversation._id);
+					}
+				}
 			} catch {
 				// Silently ignore polling failures
 			}
 		}, 5000);
 
 		return () => clearInterval(interval);
-	}, [conversation._id]);
+	}, [conversation._id, currentUserId]);
 
+	// ── Send message — optimistic append, no extra fetch needed ──
 	async function handleSendMessage(e: React.FormEvent) {
 		e.preventDefault();
 
@@ -151,12 +197,19 @@ export function ChatWindow({
 		setNewMessage("");
 
 		try {
-			const sentMessage = await sendMessageApi(conversation._id, trimmed);
-			setMessages((prev) => [...prev, sentMessage]);
+			const sentMessage = await sendMessageApi(
+				conversation._id,
+				trimmed
+			);
+
+			// Optimistically append — deduplicate in case the poll already
+			// picked it up in the brief window between send and state update.
+			setMessages((prev) => mergeMessages(prev, [sentMessage]));
+
 			onMessageSent?.();
-			// Refocus input after sending for quick follow-up messages
 			inputRef.current?.focus();
 		} catch {
+			// Restore the draft so the user doesn't lose their text
 			setNewMessage(trimmed);
 		} finally {
 			setIsSending(false);

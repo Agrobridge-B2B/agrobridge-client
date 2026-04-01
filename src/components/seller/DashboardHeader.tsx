@@ -93,6 +93,27 @@ export function DashboardHeader() {
 		};
 	}, []);
 
+	// Poll unread message count so the badge stays live without page reload
+	useEffect(() => {
+		let isMounted = true;
+
+		async function refreshUnread() {
+			try {
+				const count = await getUnreadMessagesCount();
+				if (isMounted) setUnreadMessages(count);
+			} catch {
+				// Silently ignore
+			}
+		}
+
+		const interval = setInterval(refreshUnread, 15_000);
+
+		return () => {
+			isMounted = false;
+			clearInterval(interval);
+		};
+	}, []);
+
 	useEffect(() => {
 		const stream = new EventSource(`${API_BASE_URL}/notifications/stream`, {
 			withCredentials: true,

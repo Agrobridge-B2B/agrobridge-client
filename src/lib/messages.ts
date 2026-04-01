@@ -59,17 +59,25 @@ export async function getConversations(): Promise<Conversation[]> {
 
 /**
  * Fetch paginated messages for a specific conversation.
+ *
+ * When `after` (a message _id) is provided, only messages created after
+ * that cursor are returned — used for incremental polling so the client
+ * never re-downloads the full history.
  */
 export async function getMessages(
 	conversationId: string,
 	page = 1,
-	limit = 50
+	limit = 50,
+	after?: string
 ): Promise<{
 	messages: Message[];
 	total: number;
 	page: number;
 	pages: number;
 }> {
+	const params: Record<string, string | number> = { page, limit };
+	if (after) params.after = after;
+
 	const { data } = await api.get<
 		ApiResponse<{
 			messages: Message[];
@@ -77,9 +85,7 @@ export async function getMessages(
 			page: number;
 			pages: number;
 		}>
-	>(`/conversations/${conversationId}/messages`, {
-		params: { page, limit },
-	});
+	>(`/conversations/${conversationId}/messages`, { params });
 	return data.data;
 }
 

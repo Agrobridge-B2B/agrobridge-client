@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { MessageSquare, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -8,6 +8,9 @@ import { ConversationList } from "./ConversationList";
 import { ChatWindow } from "./ChatWindow";
 import { getConversations } from "@/lib/messages";
 import type { Conversation } from "@/lib/messages";
+
+/** Interval (ms) for background conversation-list refresh */
+const CONVERSATION_POLL_INTERVAL = 10_000;
 
 export function MessagesPageClient() {
 	const { user } = useAuth();
@@ -19,6 +22,12 @@ export function MessagesPageClient() {
 
 	// On mobile, controls whether we show the conversation list or the chat window
 	const [showChat, setShowChat] = useState(false);
+
+	// Keep a ref so polling callbacks always see the latest active id
+	const activeIdRef = useRef<string | null>(null);
+	useEffect(() => {
+		activeIdRef.current = activeConversation?._id ?? null;
+	}, [activeConversation]);
 
 	const targetConversationId = searchParams.get("conversationId");
 
@@ -32,7 +41,10 @@ export function MessagesPageClient() {
 		}
 	}, []);
 
-	// Initial load of conversations
+	// ── Initial load of conversations ──
+	// When a `conversationId` query-param is present (e.g. from "Contact Seller"),
+	// auto-open that conversation. Otherwise, show the conversation list only and
+	// let the user pick who to talk to.
 	useEffect(() => {
 		let isMounted = true;
 
@@ -47,12 +59,9 @@ export function MessagesPageClient() {
 				if (target) {
 					setActiveConversation(target);
 					setShowChat(true);
-				} else if (data.length > 0) {
-					setActiveConversation(data[0]);
 				}
-			} else if (data.length > 0) {
-				setActiveConversation(data[0]);
 			}
+			// No auto-select — the user picks a conversation from the list.
 
 			setIsLoading(false);
 		}
@@ -64,6 +73,30 @@ export function MessagesPageClient() {
 		};
 	}, [targetConversationId, loadConversations]);
 
+	// ── Background polling for the conversation list (sidebar) ──
+	// Keeps last-message previews, unread counts, and ordering up-to-date
+	// without requiring a manual refresh.
+	useEffect(() => {
+		const interval = setInterval(async () => {
+			try {
+				const data = await getConversations();
+				setConversations(data);
+
+				// Keep the active conversation object in sync with the
+				// latest server data (e.g. updated unreadCount / lastMessage)
+				const currentId = activeIdRef.current;
+				if (currentId) {
+					const updated = data.find((c) => c._id === currentId);
+					if (updated) setActiveConversation(updated);
+				}
+			} catch {
+				// Silently ignore — the list stays as-is until the next poll
+			}
+		}, CONVERSATION_POLL_INTERVAL);
+
+		return () => clearInterval(interval);
+	}, []);
+
 	function handleSelectConversation(conversation: Conversation) {
 		setActiveConversation(conversation);
 		setShowChat(true);
@@ -74,14 +107,11 @@ export function MessagesPageClient() {
 		setShowChat(false);
 	}
 
-	async function handleMessageSent() {
-		const data = await loadConversations();
-		if (activeConversation) {
-			const updated = data.find((c) => c._id === activeConversation._id);
-			if (updated) {
-				setActiveConversation(updated);
-			}
-		}
+	// Lightweight callback: just trigger a conversation-list refresh
+	// so the sidebar reflects the new last-message preview.
+	// No need to refetch all messages — ChatWindow handles that internally.
+	function handleMessageSent() {
+		loadConversations();
 	}
 
 	if (isLoading) {

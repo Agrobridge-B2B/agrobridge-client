@@ -20,6 +20,7 @@ export function BuyerNavbar() {
 	const [categoryValue, setCategoryValue] = useState(searchParams.get("category") ?? "");
 	const [unreadMessages, setUnreadMessages] = useState(0);
 
+	// Fetch unread count on mount + poll every 15s so the badge stays live
 	useEffect(() => {
 		if (!isAuthenticated) return;
 
@@ -35,8 +36,12 @@ export function BuyerNavbar() {
 		}
 
 		loadUnread();
+		const interval = setInterval(loadUnread, 15_000);
 
-		return () => { isMounted = false; };
+		return () => {
+			isMounted = false;
+			clearInterval(interval);
+		};
 	}, [isAuthenticated]);
 
 	function handleSearch(e: React.FormEvent<HTMLFormElement>) {
