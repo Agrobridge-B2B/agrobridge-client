@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { getBuyerOrderSummary, type BuyerOrderSummary } from "@/lib/orders";
 import { getApiErrorMessage } from "@/lib/api";
-import { ShoppingCart, Package, User, LogOut } from "lucide-react";
+import { ShoppingCart, Package, User, LogOut, MessageSquare } from "lucide-react";
 
 function BuyerDashboardContent() {
 	const { user, logout } = useAuth();
@@ -166,7 +166,7 @@ function BuyerDashboardContent() {
 					</div>
 				</div>
 
-				<div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+				<div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
 					<Link
 						href="/buyer/products"
 						className="rounded-lg border border-gray-200 bg-white p-5 hover:border-brand-green hover:shadow-sm transition-all"
@@ -183,6 +183,18 @@ function BuyerDashboardContent() {
 						<p className="text-sm text-gray-500">Panier</p>
 						<p className="mt-2 text-base font-semibold text-gray-900">
 							Reprendre votre commande en cours
+						</p>
+					</Link>
+					<Link
+						href="/buyer/messages"
+						className="rounded-lg border border-gray-200 bg-white p-5 hover:border-brand-green hover:shadow-sm transition-all"
+					>
+						<div className="flex items-center gap-2 text-sm text-gray-500">
+							<MessageSquare className="w-4 h-4" />
+							Messages
+						</div>
+						<p className="mt-2 text-base font-semibold text-gray-900">
+							Vos conversations vendeurs
 						</p>
 					</Link>
 					<div className="rounded-lg border border-gray-200 bg-white p-5">
