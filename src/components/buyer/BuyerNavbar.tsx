@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, User, ShoppingCart } from "lucide-react";
+import { Search, User, ShoppingCart, MessageSquare } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
+import { getUnreadMessagesCount } from "@/lib/messages";
 import { PRODUCT_CATEGORIES } from "@/lib/validations/product";
 
 export function BuyerNavbar() {
@@ -17,6 +18,26 @@ export function BuyerNavbar() {
 
 	const [searchValue, setSearchValue] = useState(searchParams.get("search") ?? "");
 	const [categoryValue, setCategoryValue] = useState(searchParams.get("category") ?? "");
+	const [unreadMessages, setUnreadMessages] = useState(0);
+
+	useEffect(() => {
+		if (!isAuthenticated) return;
+
+		let isMounted = true;
+
+		async function loadUnread() {
+			try {
+				const count = await getUnreadMessagesCount();
+				if (isMounted) setUnreadMessages(count);
+			} catch {
+				// Keep navbar usable even if the count fails to load
+			}
+		}
+
+		loadUnread();
+
+		return () => { isMounted = false; };
+	}, [isAuthenticated]);
 
 	function handleSearch(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
@@ -96,6 +117,20 @@ export function BuyerNavbar() {
 								title="Se connecter"
 							>
 								<User className="w-5 h-5" />
+							</Link>
+						)}
+						{isAuthenticated && (
+							<Link
+								href="/buyer/messages"
+								className="relative p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors"
+								title="Messages"
+							>
+								<MessageSquare className="w-5 h-5" />
+								{unreadMessages > 0 && (
+									<span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+										{unreadMessages > 99 ? "99+" : unreadMessages}
+									</span>
+								)}
 							</Link>
 						)}
 						<Link
