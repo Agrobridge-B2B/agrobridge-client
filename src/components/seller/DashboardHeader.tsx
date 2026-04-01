@@ -3,14 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Search, Bell, ShoppingCart, LogOut } from "lucide-react";
+import { Search, Bell, ShoppingCart, MessageSquare, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
 	getMyNotifications,
 	getSellerOrderSummary,
 	markMyNotificationAsRead,
 	type UserNotification,
 } from "@/lib/seller";
+import { getUnreadMessagesCount } from "@/lib/messages";
 
 const API_BASE_URL =
 	process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ?? "http://localhost:8000/api";
@@ -37,6 +39,7 @@ export function DashboardHeader() {
 	const [notifications, setNotifications] = useState<UserNotification[]>([]);
 	const [unreadCount, setUnreadCount] = useState(0);
 	const [pendingOrders, setPendingOrders] = useState(0);
+	const [unreadMessages, setUnreadMessages] = useState(0);
 	const [showNotifications, setShowNotifications] = useState(false);
 	const notificationsRef = useRef<HTMLDivElement>(null);
 
@@ -64,9 +67,10 @@ export function DashboardHeader() {
 
 		async function loadHeaderData() {
 			try {
-				const [notificationsData, summary] = await Promise.all([
+				const [notificationsData, summary, msgCount] = await Promise.all([
 					getMyNotifications(8),
 					getSellerOrderSummary(),
+					getUnreadMessagesCount(),
 				]);
 
 				if (!isMounted) {
@@ -76,6 +80,7 @@ export function DashboardHeader() {
 				setNotifications(notificationsData.notifications);
 				setUnreadCount(notificationsData.unreadCount);
 				setPendingOrders(summary.pendingOrders);
+				setUnreadMessages(msgCount);
 			} catch {
 				// Keep header interactive even if API data is unavailable.
 			}
@@ -208,6 +213,19 @@ export function DashboardHeader() {
 							</div>
 						)}
 					</div>
+
+					<Link
+						href="/seller/messages"
+						className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+						title="Messages"
+					>
+						<MessageSquare className="w-5 h-5" />
+						{unreadMessages > 0 && (
+							<span className="absolute -top-1 -right-1 bg-brand-green text-white text-xs min-w-5 h-5 px-1 rounded-full flex items-center justify-center">
+								{unreadMessages > 99 ? "99+" : unreadMessages}
+							</span>
+						)}
+					</Link>
 
 					<button
 						type="button"

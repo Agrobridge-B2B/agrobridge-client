@@ -4,10 +4,12 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, MapPin, Check, Star, CreditCard, Minus, Plus } from "lucide-react";
+import { ArrowLeft, MapPin, Check, Star, CreditCard, Minus, Plus, MessageSquare, Loader2 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { useToastContext } from "@/context/ToastContext";
 import { getImageUrl } from "@/lib/upload";
+import { startConversation } from "@/lib/messages";
 import type { Product } from "@/lib/products";
 
 interface ProductDetailClientProps {
@@ -17,16 +19,29 @@ interface ProductDetailClientProps {
 function getSellerInfo(seller: Product["seller"]) {
 	if (typeof seller === "object" && seller !== null) {
 		return {
+			id: seller._id,
 			name: seller.fullName,
+			country: seller.country,
 			isCertified: seller.isCertified === true,
+			profileImage: seller.profileImage || "",
 		};
 	}
-	return { name: String(seller), isCertified: false };
+	return { id: String(seller), name: String(seller), country: "", isCertified: false, profileImage: "" };
+}
+
+function getInitials(name: string): string {
+	return name
+		.split(" ")
+		.map((part) => part.charAt(0))
+		.join("")
+		.toUpperCase()
+		.slice(0, 2);
 }
 
 export function ProductDetailClient({ product }: ProductDetailClientProps) {
 	const router = useRouter();
 	const { addItem, setItemQuantity, isInCart } = useCart();
+	const { user, isAuthenticated } = useAuth();
 	const { addToast } = useToastContext();
 	const seller = getSellerInfo(product.seller);
 	const unitLabel = product.unit.toLowerCase();
@@ -34,6 +49,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
 	const [quantity, setQuantity] = useState(minQuantity);
 	const [selectedImage, setSelectedImage] = useState(0);
+	const [isContactingSeller, setIsContactingSeller] = useState(false);
 
 	const total = quantity * product.pricePerUnit;
 
@@ -53,6 +69,24 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 	function handleBuyNow() {
 		setItemQuantity(product, quantity);
 		router.push("/buyer/checkout");
+	}
+
+	async function handleContactSeller() {
+		if (!isAuthenticated) {
+			router.push("/login");
+			return;
+		}
+
+		setIsContactingSeller(true);
+		try {
+			const introMessage = `Bonjour! Je suis intéressé par votre produit "${product.name}".`;
+			const result = await startConversation(seller.id, introMessage);
+			router.push(`/buyer/messages?conversationId=${result.conversation._id}`);
+		} catch {
+			addToast("Impossible de contacter le vendeur. Veuillez réessayer.");
+		} finally {
+			setIsContactingSeller(false);
+		}
 	}
 
 	return (
@@ -123,9 +157,70 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 					)}
 
 					{/* Seller Card */}
-					<div className="mt-6 bg-white border border-gray-200 rounded-xl p-4">
-						<p className="text-xs text-gray-500 mb-1">Vendeur</p>
-						<p className="text-sm font-semibold text-gray-900">{seller.name}</p>
+					<div className="mt-6 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+						<p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 mb-3">
+							Vendeur
+						</p>
+
+						<div className="flex items-center gap-3 mb-4">
+							{/* Seller Avatar */}
+							<div className="relative shrink-0">
+								{seller.profileImage ? (
+									<Image
+										src={getImageUrl(seller.profileImage)}
+										alt={seller.name}
+										width={48}
+										height={48}
+										className="w-12 h-12 rounded-full object-cover border-2 border-gray-100"
+										unoptimized
+									/>
+								) : (
+									<div className="w-12 h-12 rounded-full bg-brand-green flex items-center justify-center text-white font-bold text-sm border-2 border-brand-green-light/30">
+										{getInitials(seller.name)}
+									</div>
+								)}
+								{seller.isCertified && (
+									<span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-brand-green rounded-full flex items-center justify-center border-2 border-white">
+										<Check className="w-3 h-3 text-white" />
+									</span>
+								)}
+							</div>
+
+							{/* Seller Info */}
+							<div className="flex-1 min-w-0">
+								<div className="flex items-center gap-1.5">
+									<p className="text-sm font-semibold text-gray-900 truncate">
+										{seller.name}
+									</p>
+									{seller.isCertified && (
+										<span className="shrink-0 text-[10px] font-semibold text-brand-green bg-brand-green/10 px-1.5 py-0.5 rounded">
+											Vérifié
+										</span>
+									)}
+								</div>
+								{seller.country && (
+									<div className="flex items-center gap-1 mt-0.5">
+										<MapPin className="w-3 h-3 text-gray-400" />
+										<p className="text-xs text-gray-500">{seller.country}</p>
+									</div>
+								)}
+							</div>
+						</div>
+
+						{/* Contact Button */}
+						<button
+							type="button"
+							onClick={handleContactSeller}
+							disabled={isContactingSeller}
+							className="w-full flex items-center justify-center gap-2 bg-brand-green text-white font-semibold py-3 rounded-xl hover:bg-brand-green-dark active:scale-[0.98] transition-all text-sm disabled:opacity-60 shadow-sm shadow-brand-green/20"
+						>
+							{isContactingSeller ? (
+								<Loader2 className="w-4 h-4 animate-spin" />
+							) : (
+								<MessageSquare className="w-4 h-4" />
+							)}
+							Contacter le vendeur
+						</button>
 					</div>
 				</div>
 
